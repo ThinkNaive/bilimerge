@@ -4,25 +4,25 @@
       1. Find folders from /sdcard/Android/data/tv.danmaku.bili/download/
       2. Copy bilibili android app download files (folder with numbers such as 6323484, which contains sub-folders with numbers such as (16,17,18)) to the executive file (compiled by ./make.sh)
       3. The files ready for use are as follows:
-      <certain folder>
-        <bilimerge/>
-        <61367436>
-          <16>
-            <lua.flvxxx/>
-            <danmaku.xml/>
-            <entry.json/>
-          </16>
-          <17>
-            <lua.flvxxx/>
-            <danmaku.xml/>
-            <entry.json/>
-          </17>
-        </61367436>
-        <47328443>
-          ...
-        </47328443>
-        ...
-      </certain folder>
+            <certain folder>
+              <bilimerge/>
+              <61367436>
+                <16>
+                  <lua.flvxxx/>
+                  <danmaku.xml/>
+                  <entry.json/>
+                </16>
+                <17>
+                  <lua.flvxxx/>
+                  <danmaku.xml/>
+                  <entry.json/>
+                </17>
+              </61367436>
+              <47328443>
+                ...
+              </47328443>
+              ...
+            </certain folder>
       p.s. support multiple folders(61367436,47328443,34234231)
       4. execute bilimerge : ./bilimerge
       5. it is expected to find all merged videos with video title in the <certain folder> if well executed.
