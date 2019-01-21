@@ -309,7 +309,7 @@ int main()
         }
 
         flvmerge(listcount + 2, argv);
-        printf("Completed : %5.1f%%\r", (float)100.0*(count - toppara)/count);
+        printf("Processing : %5.1f%%\n", (float)100.0*(count - toppara)/count);
 
         for (int i = 0; i < listcount + 2; ++i)
             free(argv[i]);

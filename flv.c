@@ -14,8 +14,8 @@ typedef struct PREVTAG
 {
     uint8_t Tag;              // audio:0x08 video:0x09 script:0x12 default:reserved
     uint32_t BufferSize : 24; // Buffer size
-    uint32_t TimeStamp : 24;  // default 0x00
-    uint8_t TimeStampExt;     // default 0x00
+    uint32_t TimeStamp : 24;
+    uint8_t TimeStampExt;
     uint32_t StreamsID : 24;  // default 0x00
 } PrevTag;
 
@@ -80,10 +80,10 @@ int flvmerge(int argc, char *argv[])
             Tag tag;
             size_t sz = fread(&tag.prev, sizeof(PrevTag), 1, f);
             tag.prev.BufferSize = BitFieldReverse(tag.prev.BufferSize, 3);
-            tag.prev.TimeStamp = BitFieldReverse(tag.prev.TimeStamp, 3);
             tag.prev.StreamsID = BitFieldReverse(tag.prev.StreamsID, 3);
-            // timestamp calculate again, used for bilibili videos,
-            // so duration less than 4 hours, timestamp_ext excluded.
+            // 这里，需要对timestampext加入高位
+            tag.prev.TimeStamp = BitFieldReverse(tag.prev.TimeStamp, 3);
+            tag.prev.TimeStamp += (uint32_t)tag.prev.TimeStampExt << 24;
             tag.prev.TimeStamp += LastTimeStampMillisecond;
 
             int pos;
@@ -113,10 +113,10 @@ int flvmerge(int argc, char *argv[])
                 DurationLocation = sizeof(Header) + sizeof(PrevTag) + pos;
             }
 
-            if ((i == 2 && tag.prev.Tag == 0x12) 
-                || tag.prev.Tag != 0x12) // 忽略剩下文件的脚本帧，写入音频视频Tag
+            if ((i == 2 && tag.prev.Tag == 0x12) || tag.prev.Tag != 0x12) // 忽略剩下文件的脚本帧，写入音频视频Tag
             {
                 tag.prev.BufferSize = BitFieldReverse(tag.prev.BufferSize, 3);
+                tag.prev.TimeStampExt = tag.prev.TimeStamp >> 24;
                 tag.prev.TimeStamp = BitFieldReverse(tag.prev.TimeStamp, 3);
                 tag.prev.StreamsID = BitFieldReverse(tag.prev.StreamsID, 3);
                 fwrite(&tag.prev, sizeof(PrevTag), 1, fo);
@@ -125,7 +125,7 @@ int flvmerge(int argc, char *argv[])
                 EdianReverse(&tag.PreviousTagSize, sizeof(uint32_t));
                 fwrite(&tag.PreviousTagSize, sizeof(uint32_t), 1, fo);
             }
-            
+
             free(tag.Buffer);
         }
         double duration = UlongToDouble(&LastDuration) + UlongToDouble(&CurrentDuration);
@@ -136,6 +136,7 @@ int flvmerge(int argc, char *argv[])
     fseek(fo, DurationLocation, SEEK_SET);
     EdianReverse(&LastDuration, sizeof(uint64_t));
     fwrite(&LastDuration, sizeof(uint64_t), 1, fo);
+    
     fclose(fo);
     return 0;
 }
