@@ -228,6 +228,22 @@ bool GetFileSpec(char *basePath, Dtype dtype, char suffix[1024], char stack[][10
     return true;
 }
 
+void PathFilter(char *path, char substitute)
+{
+    char old[8] = {'\\', '/', ':', '*', '?', '\"', '<', '>'};
+    int p = 0;
+    while (path[p])
+    {
+        for (int i=0; i<8; ++i)
+            if (path[p] == old[i])
+            {
+                path[p] = substitute;
+                break;
+            }
+        ++p;
+    }
+}
+
 void sort(Flvlist list[], int n)
 {
     bool finish = false;
@@ -259,7 +275,8 @@ int main()
     GetDirList(".", DT_DIR, stack, &top);
     while (top > -1)
         GetDirList(stack[top--], DT_DIR, stpara, &toppara);
-    int count = toppara + 1;
+    // progress indicator initialization
+    g_number_of_videos = toppara + 1;
 
     while (toppara > -1)
     {
@@ -270,7 +287,9 @@ int main()
         fileHead[1] = '/';
         strcpy(str_ent, stpara[toppara]);
         strcat(str_ent, "/entry.json");
-        FILE *f = fopen(str_ent, "r");
+        FILE *f = NULL;
+        f = fopen(str_ent, "r");
+        if (!f) continue;
         Tjson *t = CreateJson(f);
         Tjson *e;
         e = GetJsonNode(t, "title");
@@ -279,9 +298,15 @@ int main()
         strcat(fileHead, "- ");
         strcat(fileHead, e->string);
         strcat(fileHead, ".flv");
+        // to be done, illegal file character
         e = GetJsonNode(t, "type_tag"); // child directory
         strcat(stpara[toppara], "/");
         strcat(stpara[toppara], e->string);
+
+        // progress indicator initialization
+        g_progress_base = (float)(g_number_of_videos - toppara - 1) / (float)g_number_of_videos;
+        g_video_duration = GetJsonNode(t, "total_time_milli")->data;
+
         DeleteJson(t);
 
         GetFileSpec(stpara[toppara], DT_REG, ".blv", stack, &top);
@@ -308,13 +333,13 @@ int main()
             strcat(argv[i + 2], flvlist[i].name);
         }
 
+        PathFilter(argv[1]+2, '^');
         flvmerge(listcount + 2, argv);
-        printf("Processing : %5.1f%%\n", (float)100.0*(count - toppara)/count);
 
         for (int i = 0; i < listcount + 2; ++i)
             free(argv[i]);
         toppara--;
     }
-
+    printf("\b\rProcessing : 100.0%%\n");
     return 0;
 }

@@ -63,6 +63,8 @@ int flvmerge(int argc, char *argv[])
     FILE *fo = fopen(argv[1], "wb");
     uint64_t LastDuration = 0;
     int DurationLocation;
+    g_last_duration = 0;
+    g_current_duration = 0;
 
     for (int i = 2; i < argc; ++i)
     {
@@ -79,12 +81,14 @@ int flvmerge(int argc, char *argv[])
         {
             Tag tag;
             size_t sz = fread(&tag.prev, sizeof(PrevTag), 1, f);
+            if (sz < 1) break;
             tag.prev.BufferSize = BitFieldReverse(tag.prev.BufferSize, 3);
             tag.prev.StreamsID = BitFieldReverse(tag.prev.StreamsID, 3);
             // 这里，需要对timestampext加入高位
             tag.prev.TimeStamp = BitFieldReverse(tag.prev.TimeStamp, 3);
             tag.prev.TimeStamp += (uint32_t)tag.prev.TimeStampExt << 24;
             tag.prev.TimeStamp += LastTimeStampMillisecond;
+            g_current_duration = tag.prev.TimeStamp;
 
             int pos;
             tag.Buffer = (uint8_t *)malloc(sizeof(uint8_t) * tag.prev.BufferSize);
@@ -127,6 +131,7 @@ int flvmerge(int argc, char *argv[])
             }
 
             free(tag.Buffer);
+            ProgressIndicator();
         }
         double duration = UlongToDouble(&LastDuration) + UlongToDouble(&CurrentDuration);
         LastDuration = DoubleToUlong(&duration);

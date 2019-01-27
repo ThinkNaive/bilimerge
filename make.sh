@@ -10,4 +10,4 @@
 #     cd ..;
 # done
 
-gcc -o bilimerge bilimerge.c flv.c kmp.c
+gcc -o bilimerge bilimerge.c flv.c kmp.c indicator.c
